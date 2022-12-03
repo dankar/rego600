@@ -59,3 +59,5 @@ Apart from possibly missing registers, there are some other open questions:
 * Minimum and maximum limits of different settings.
 * It might be possible to write to some of the registers which this code is currently just reading from.
 * General undocumented stuff.
+
+The code is also in dire need of a big cleanup, which might happen any day now.
