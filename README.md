@@ -50,3 +50,12 @@ python3 -m esphome run heat_pump.yaml
 After you've done this once, the same command can also update the firmware on the microcontroller via wifi.
 
 The device should be reachable on your LAN, with the adress http://heatpump/ unless you changed the device name. The API is also enabled so it should be possible to add it to e.g. home assistant with the same name.
+
+## Further development
+
+There is, as far as I know, no official documentation of this protocol. I've implemented most of the registers that I could find in different sources online (one part that is currently missing is reading out alarm logs).
+
+Apart from possibly missing registers, there are some other open questions:
+* Minimum and maximum limits of different settings.
+* It might be possible to write to some of the registers which this code is currently just reading from.
+* General undocumented stuff.
