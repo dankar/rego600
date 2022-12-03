@@ -53,7 +53,7 @@ The device should be reachable on your LAN, with the adress http://heatpump/ unl
 
 ## Further development
 
-There is, as far as I know, no official documentation of this protocol. I've implemented most of the registers that I could find in different sources online (one part that is currently missing is reading out alarm logs).
+There is, as far as I know, no official documentation of this protocol. I've implemented most of the registers that I could find in different sources online (one part that is currently missing from the code, but is fairly well documented, is reading out alarm logs, as well as reading the lines on the display).
 
 Apart from possibly missing registers, there are some other open questions:
 * Minimum and maximum limits of different settings.
