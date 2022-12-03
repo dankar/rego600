@@ -8,6 +8,12 @@
 
 **This code is written specifically for the Rego 600.** Not the 636, not the 71042 or whatever. There are documents specifying the registers for other versions so this code can probably be adapted to other models, but you can't and shouldn't use this for anything other than model 600. **If you use this code on any other model, the code might instruct it to detonate, who knows.** The code has no idea what model it is talking to. It might be communicating with a space shuttle or a banana for all it cares.
 
+## What it does
+
+Here's a view in home assistant of the data and controls provided by the code:
+
+![home assistant](hardware/hass.jpeg)
+
 ## Hardware
 
 You can connect almost any microcontroller directly to the heat pump serial interface. The only caveat is that the heat pump serial interface runs on 5 volts and your microcontroller might be 3.3 volts. In that case you must convert the voltages on the serial interface between them. I used a simple [level converter](https://www.sparkfun.com/products/12009) to do the job, but you might want to consider creating a better circuit using opto-couplers.
