@@ -1,0 +1,212 @@
+esphome:
+  name: heatpump
+  includes:
+    - rego600_config.h
+    - rego600.h
+    - rego600.cpp
+    - rego600_temperature_sensors.h
+    - rego600_temperature_sensors.cpp
+    - rego600_buttons.h
+    - rego600_buttons.cpp
+    - rego600_definitions.h
+    - rego600_status.h
+    - rego600_status.cpp
+    - rego600_control.h
+    - rego600_control.cpp
+    - rego600_targets.h
+    - rego600_targets.cpp
+
+esp8266:
+  board: nodemcuv2
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Fallback Hotspot"
+    password: "dyauNBBsI4M0"
+
+captive_portal:
+
+uart:
+  id: uart_bus
+  tx_pin:
+    number: D0
+  rx_pin:
+    number: D2
+    inverted: true
+
+  baud_rate: 19200
+
+custom_component:
+  - id: rego_communication
+    lambda: |-
+      rego600 *rego = new rego600(id(uart_bus));
+      return {rego};
+  - id: rego_buttons
+    lambda: |-
+      auto *rego_buttons = new rego600_buttons(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_buttons);
+      return {rego_buttons};
+  - id: rego_control
+    lambda: |-
+      auto *rego_control = new rego600_control(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_control);
+      return {rego_control};
+
+binary_sensor:
+  - platform: custom
+    lambda: |-
+      auto *rego_status = new rego600_status(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_status);
+      return {
+          rego_status->ground_loop_pump,
+          rego_status->compressor,
+          rego_status->heat_cartridge_3kw,
+          rego_status->heat_cartridge_6kw,
+          rego_status->radiator_pump,
+          rego_status->heat_carrier_pump,
+          rego_status->three_way_valve,
+          rego_status->alarm,
+          rego_status->led_power,
+          rego_status->led_pump,
+          rego_status->led_add_heat,
+          rego_status->led_boiler,
+          rego_status->led_alarm
+      };
+    binary_sensors:
+    - name: "Ground loop pump"
+    - name: "Compressor"
+    - name: "Heat cartridge 3kW"
+    - name: "Heat cartridge 6kW"
+    - name: "Radiator pump"
+    - name: "Heat carrier pump"
+    - name: "Three way valve"
+    - name: "Alarm"
+    - name: "Panel LED power"
+    - name: "Panel LED pump"
+    - name: "Panel LED add heat"
+    - name: "Panel LED boiler"
+    - name: "Panel LED alarm"
+
+
+sensor:
+  - platform: custom
+    lambda: |-
+      auto *rego_sensor = new rego600_temperature_sensors(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_sensor);
+      auto *rego_targets = new rego600_targets(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_targets);
+      return {
+          rego_sensor->radiator_return,
+          rego_sensor->outdoor,
+          rego_sensor->indoor,
+          rego_sensor->warm_water,
+          rego_sensor->radiator_forward,
+          rego_sensor->heat_fluid_in,
+          rego_sensor->heat_fluid_out,
+          rego_sensor->cold_fluid_in,
+          rego_sensor->cold_fluid_out,
+
+          rego_targets->radiator_return_target,
+          rego_targets->radiator_return_on,
+          rego_targets->radiator_return_off,
+          rego_targets->warm_water_target,
+          rego_targets->warm_water_on,
+          rego_targets->warm_water_off,
+          rego_targets->add_heat_percentage
+      };
+    sensors:
+    - name: "Radiator return"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Outdoor"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Indoor"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Warm water"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Radiator forward"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Heat fluid in"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Heat fluid out"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Cold fluid in"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Cold fluid out"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Radiator return target"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Radiator return on"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Radiator return off"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Warm water target"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Warm water on"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Warm water off"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Add heat percentage"
+      unit_of_measurement: '%'
+      accuracy_decimals: 1
+
+button:
+  - platform: template
+    name: "Power"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_power();
+  - platform: template
+    name: "Key 1"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_key1();
+  - platform: template
+    name: "Key 2"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_key2();
+  - platform: template
+    name: "Key 3"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_key3();
+  - platform: template
+    name: "Wheel left"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_wheel_left();
+  - platform: template
+    name: "Wheel right"
+    on_press:
+      lambda: |-
+        get_buttons(rego_buttons)->press_wheel_right();
+number:
+web_server:
+  port: 80
