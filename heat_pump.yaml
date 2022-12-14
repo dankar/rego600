@@ -117,6 +117,7 @@ sensor:
           rego_sensor->heat_fluid_out,
           rego_sensor->cold_fluid_in,
           rego_sensor->cold_fluid_out,
+          rego_sensor->compressor,
 
           rego_targets->radiator_return_target,
           rego_targets->radiator_return_on,
@@ -152,6 +153,9 @@ sensor:
       unit_of_measurement: °C
       accuracy_decimals: 1
     - name: "Cold fluid out"
+      unit_of_measurement: °C
+      accuracy_decimals: 1
+    - name: "Compressor temperature"
       unit_of_measurement: °C
       accuracy_decimals: 1
     - name: "Radiator return target"

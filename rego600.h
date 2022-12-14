@@ -18,6 +18,7 @@ struct temperatures_t {
     std::optional<float> heat_fluid_out;
     std::optional<float> cold_fluid_in;
     std::optional<float> cold_fluid_out;
+    std::optional<float> compressor;
 };
 
 // Struct for all the target temperatures that we extract.

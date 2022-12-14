@@ -262,6 +262,7 @@ temperatures_t rego600::read_all_sensors()
     temps.heat_fluid_out   = read_decimal_sensor(HEAT_FLUID_OUT_TEMPERATURE);
     temps.cold_fluid_in    = read_decimal_sensor(COLD_FLUID_IN_TEMPERATURE);
     temps.cold_fluid_out   = read_decimal_sensor(COLD_FLUID_OUT_TEMPERATURE);
+    temps.compressor       = read_decimal_sensor(COMPRESSOR_TEMPERATURE);
 
     return temps;
 }

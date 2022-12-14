@@ -14,7 +14,7 @@
 // Once an hour since these will only change if we change them, and
 // if we change them via the protocol, we will read the updated value
 // immediately
-#define CONTROL_REGISTER_INTERVAL (60 * 60000)
+#define CONTROL_REGISTER_INTERVAL (60000)
 
 // Device (compressor, heater cartridge etc.) on/off values
 #define STATUS_REGISTER_INTERVAL (23000)

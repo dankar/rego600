@@ -39,4 +39,8 @@ void rego600_temperature_sensors::update()
     if (t.cold_fluid_out) {
         cold_fluid_out->publish_state(t.cold_fluid_out.value());
     }
+
+    if (t.compressor) {
+        compressor->publish_state(t.compressor.value());
+    }
 }

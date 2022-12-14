@@ -20,6 +20,7 @@ public:
     esphome::sensor::Sensor* heat_fluid_out   = new esphome::sensor::Sensor();
     esphome::sensor::Sensor* cold_fluid_in    = new esphome::sensor::Sensor();
     esphome::sensor::Sensor* cold_fluid_out   = new esphome::sensor::Sensor();
+    esphome::sensor::Sensor* compressor       = new esphome::sensor::Sensor();
 
     rego600_temperature_sensors(rego600* rego)
         : PollingComponent(TEMPERATURE_REGISTER_INTERVAL)
