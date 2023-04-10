@@ -36,7 +36,9 @@ struct targets_t {
 // Rego 600 based heat pumps.
 class rego600 : public esphome::Component {
 private:
-    static constexpr uint32_t m_timeout = 1000;
+    static constexpr uint32_t m_timeout         = 500;
+    static constexpr uint32_t m_timeout_holdoff = 10000;
+    uint32_t m_last_timeout    = 0;
 
     esphome::uart::UARTDevice    m_uart;
     static constexpr const char* TAG = "Rego600";
