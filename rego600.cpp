@@ -13,10 +13,23 @@ std::optional<std::vector<uint8_t>> rego600::read_serial(size_t len)
     size_t   pos   = 0;
     uint32_t start = millis();
 
+    if(m_last_timeout != 0)
+    {
+        if(start - m_last_timeout > m_timeout_holdoff)
+        {
+            m_last_timeout = 0;
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
     std::vector<uint8_t> result;
 
     while (pos < len) {
         if (millis() - start > m_timeout) {
+            m_last_timeout = millis();
             return std::nullopt;
         }
 
