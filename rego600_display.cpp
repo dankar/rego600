@@ -1,4 +1,5 @@
 #include "rego600_display.h"
+#include "rego600_config.h"
 
 using namespace esphome;
 
@@ -59,7 +60,7 @@ std::string latin9_to_utf8(const std::string input)
     return result;
 }
 
-void rego600_display::update()
+void rego600_display::update_display()
 {
     auto disp = m_rego600->read_display();
 
@@ -69,4 +70,14 @@ void rego600_display::update()
         display_line3->publish_state(latin9_to_utf8(disp.value()[2]));
         display_line4->publish_state(latin9_to_utf8(disp.value()[3]));
     }
+}
+
+void rego600_display::delay_update(uint32_t delay)
+{
+
+}
+
+void rego600_display::update()
+{
+    update_display();
 }

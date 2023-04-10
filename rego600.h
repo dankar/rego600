@@ -37,7 +37,7 @@ struct targets_t {
 class rego600 : public esphome::Component {
 private:
     static constexpr uint32_t m_timeout         = 500;
-    static constexpr uint32_t m_timeout_holdoff = 10000;
+    static constexpr uint32_t m_timeout_holdoff = 500;
     uint32_t m_last_timeout    = 0;
 
     esphome::uart::UARTDevice    m_uart;

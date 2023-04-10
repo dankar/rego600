@@ -65,6 +65,11 @@ custom_component:
       auto *rego_control = new rego600_control(static_cast<rego600*>(id(rego_communication).get_component(0)));
       App.register_component(rego_control);
       return {rego_control};
+  - id: rego_display
+    lambda: |-
+      auto *rego_display = new rego600_display(static_cast<rego600*>(id(rego_communication).get_component(0)));
+      App.register_component(rego_display);
+      return {rego_display};
 
 binary_sensor:
   - platform: custom
@@ -185,13 +190,11 @@ sensor:
 text_sensor:
 - platform: custom
   lambda: |-
-    auto *rego_display = new rego600_display(static_cast<rego600*>(id(rego_communication).get_component(0)));
-    App.register_component(rego_display);
     return {
-          rego_display->display_line1,
-          rego_display->display_line2,
-          rego_display->display_line3,
-          rego_display->display_line4
+          get_display(rego_display)->display_line1,
+          get_display(rego_display)->display_line2,
+          get_display(rego_display)->display_line3,
+          get_display(rego_display)->display_line4
     };
   text_sensors:
     - name: "Display line 1"
@@ -203,33 +206,56 @@ button:
   - platform: template
     name: "Power"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_power();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_power();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
+          
   - platform: template
     name: "Key 1"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_key1();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_key1();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
+          
   - platform: template
     name: "Key 2"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_key2();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_key2();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
+          
   - platform: template
     name: "Key 3"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_key3();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_key3();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
+
   - platform: template
     name: "Wheel left"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_wheel_left();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_wheel_left();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
+          
   - platform: template
     name: "Wheel right"
     on_press:
-      lambda: |-
-        get_buttons(rego_buttons)->press_wheel_right();
+      - lambda: |-
+          get_buttons(rego_buttons)->press_wheel_right();
+      - delay: 500ms
+      - lambda: |-
+          get_display(rego_display)->update();
 number:
 web_server:
   port: 80
