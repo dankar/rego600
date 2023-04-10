@@ -25,4 +25,7 @@
 // Temperature sensor registers, outdoor temp, fluid temps etc.
 #define TEMPERATURE_REGISTER_INTERVAL (19000)
 
+// Display read interval
+#define DISPLAY_READ_INTERVAL (61000)
+
 #endif

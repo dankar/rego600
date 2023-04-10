@@ -103,7 +103,8 @@ bool rego600::read_ack_response()
 
 std::optional<int16_t> rego600::read_response()
 {
-    auto response = read_serial(5);
+    const size_t response_length = 5;
+    auto         response        = read_serial(response_length);
 
     if (!response) {
         ESP_LOGE(TAG, "Timeout waiting for response");
@@ -117,7 +118,7 @@ std::optional<int16_t> rego600::read_response()
         return std::nullopt;
     }
 
-    if (calculate_checksum(&resp[1], 4) != 0) {
+    if (calculate_checksum(&resp[1], response_length - 1) != 0) {
         ESP_LOGE(TAG, "Incorrect checksum in response");
         return std::nullopt;
     }
@@ -125,42 +126,41 @@ std::optional<int16_t> rego600::read_response()
     return read_integer(&resp[1]);
 }
 
-std::optional<int16_t> rego600::run_command(target_t target, operation_t operation, uint16_t reg, uint16_t value, response_type_t response)
+std::optional<std::vector<uint8_t>> rego600::read_long_response()
 {
+    const size_t long_response_length = 42;
 
-    command_t              cmd;
-    std::optional<int16_t> result;
+    auto response = read_serial(long_response_length);
 
-    cmd.target    = target;
-    cmd.operation = operation;
-    write_integer(reg, cmd.reg);
-    write_integer(value, cmd.value);
-    cmd.checksum = calculate_checksum(cmd.reg, 6);
-
-    std::vector<uint8_t> data(sizeof(command_t));
-
-    memcpy(&data[0], &cmd, sizeof(command_t));
-
-    flush_receive();
-
-    if (write_serial(data)) {
-        if (response == ONE_BYTE_RESPONSE) {
-            if (read_ack_response()) {
-                result = 1;
-            }
-        } else if (response == FIVE_BYTE_RESPONSE) {
-            result = read_response();
-        }
+    if (!response) {
+        ESP_LOGE(TAG, "Timeout waiting for long response");
+        return std::nullopt;
     }
 
-    flush_receive();
+    auto resp = response.value();
+
+    if (resp[0] != PC_TARGET) {
+        ESP_LOGE(TAG, "Wrong target for long response, got 0x%02x", resp[0]);
+        return std::nullopt;
+    }
+
+    if (calculate_checksum(&resp[1], long_response_length - 1) != 0) {
+        ESP_LOGE(TAG, "Incorrect checksum in long response");
+        return std::nullopt;
+    }
+
+    std::vector<uint8_t> result;
+
+    for (size_t i = 1; i < long_response_length - 1; i += 2) {
+        result.push_back(((resp[i] & 0xf) << 4) | (resp[i + 1] & 0xf));
+    }
 
     return result;
 }
 
 std::optional<float> rego600::read_sensor_register(sensor_register_t reg)
 {
-    auto response = run_command(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0, FIVE_BYTE_RESPONSE);
+    auto response = run_command<FIVE_BYTE_RESPONSE>(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0);
 
     if (!response) {
         return std::nullopt;
@@ -171,12 +171,12 @@ std::optional<float> rego600::read_sensor_register(sensor_register_t reg)
 
 bool rego600::write_button_register(front_panel_button_t reg, uint16_t val)
 {
-    return run_command(REGO_TARGET, WRITE_FRONT_PANEL, reg, val, ONE_BYTE_RESPONSE).has_value();
+    return run_command<ONE_BYTE_RESPONSE>(REGO_TARGET, WRITE_FRONT_PANEL, reg, val);
 }
 
 std::optional<bool> rego600::read_light_register(front_panel_light_t reg)
 {
-    auto response = run_command(REGO_TARGET, READ_FRONT_PANEL, reg, 0, FIVE_BYTE_RESPONSE);
+    auto response = run_command<FIVE_BYTE_RESPONSE>(REGO_TARGET, READ_FRONT_PANEL, reg, 0);
 
     if (!response) {
         return std::nullopt;
@@ -191,7 +191,7 @@ std::optional<bool> rego600::read_light_register(front_panel_light_t reg)
 
 std::optional<float> rego600::read_control_register(control_register_t reg)
 {
-    auto response = run_command(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0, FIVE_BYTE_RESPONSE);
+    auto response = run_command<FIVE_BYTE_RESPONSE>(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0);
 
     if (!response) {
         return std::nullopt;
@@ -200,10 +200,20 @@ std::optional<float> rego600::read_control_register(control_register_t reg)
     return integer_to_float(response.value());
 }
 
+std::optional<std::vector<uint8_t>> rego600::read_display_line(uint8_t line)
+{
+    if(line > 3)
+    {
+        ESP_LOGE(TAG, "Read from invalid display line");
+        return std::nullopt;
+    }
+    return run_command<FOURTYTWO_BYTE_RESPONSE>(REGO_TARGET, READ_DISPLAY, line, line);
+}
+
 bool rego600::write_control_register(control_register_t reg, float val)
 {
     int16_t tmp = float_to_integer(val);
-    return run_command(REGO_TARGET, WRITE_SYSTEM_REGISTER, reg, tmp, ONE_BYTE_RESPONSE).has_value();
+    return run_command<ONE_BYTE_RESPONSE>(REGO_TARGET, WRITE_SYSTEM_REGISTER, reg, tmp);
 }
 
 bool rego600::press_button(front_panel_button_t button)
@@ -245,7 +255,7 @@ std::optional<bool> rego600::read_panel_light(front_panel_light_t reg)
 
 std::optional<int16_t> rego600::read_status(status_register_t reg)
 {
-    return run_command(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0, FIVE_BYTE_RESPONSE);
+    return run_command<FIVE_BYTE_RESPONSE>(REGO_TARGET, READ_SYSTEM_REGISTER, reg, 0);
 }
 
 std::optional<float> rego600::read_decimal_sensor(sensor_register_t reg) { return read_sensor_register(reg); }
@@ -280,4 +290,33 @@ targets_t rego600::read_all_targets()
     targets.add_heat_percentage    = read_decimal_sensor(ADD_HEAT_PERCENTAGE);
 
     return targets;
+}
+
+
+std::optional<std::vector<std::string>> rego600::read_display()
+{
+    auto l1 = read_display_line(0);
+    auto l2 = read_display_line(1);
+    auto l3 = read_display_line(2);
+    auto l4 = read_display_line(3);
+
+    if(!l1.has_value() || !l2.has_value() || !l3.has_value() || !l4.has_value())
+    {
+        ESP_LOGE(TAG, "Failed to read display line");
+        return std::nullopt;
+    }
+
+    auto line1 = l1.value();
+    auto line2 = l2.value();
+    auto line3 = l3.value();
+    auto line4 = l4.value();
+
+    std::vector<std::string> result;
+
+    result.push_back(std::string(line1.begin(), line1.end()));
+    result.push_back(std::string(line2.begin(), line2.end()));
+    result.push_back(std::string(line3.begin(), line3.end()));
+    result.push_back(std::string(line4.begin(), line4.end()));
+
+    return result;
 }

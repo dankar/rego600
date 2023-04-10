@@ -15,6 +15,8 @@ esphome:
     - rego600_control.cpp
     - rego600_targets.h
     - rego600_targets.cpp
+    - rego600_display.h
+    - rego600_display.cpp
 
 esp8266:
   board: nodemcuv2
@@ -179,6 +181,23 @@ sensor:
     - name: "Add heat percentage"
       unit_of_measurement: '%'
       accuracy_decimals: 1
+
+text_sensor:
+- platform: custom
+  lambda: |-
+    auto *rego_display = new rego600_display(static_cast<rego600*>(id(rego_communication).get_component(0)));
+    App.register_component(rego_display);
+    return {
+          rego_display->display_line1,
+          rego_display->display_line2,
+          rego_display->display_line3,
+          rego_display->display_line4
+    };
+  text_sensors:
+    - name: "Display line 1"
+    - name: "Display line 2"
+    - name: "Display line 3"
+    - name: "Display line 4"
 
 button:
   - platform: template

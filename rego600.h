@@ -36,7 +36,7 @@ struct targets_t {
 // Rego 600 based heat pumps.
 class rego600 : public esphome::Component {
 private:
-    static constexpr uint32_t m_timeout = 500;
+    static constexpr uint32_t m_timeout = 1000;
 
     esphome::uart::UARTDevice    m_uart;
     static constexpr const char* TAG = "Rego600";
@@ -46,21 +46,73 @@ private:
 
     int16_t read_integer(const uint8_t* data);
 
-    float                  integer_to_float(int16_t i);
-    int16_t                float_to_integer(float f);
-    void                   write_integer(int16_t val, uint8_t* data);
-    uint8_t                calculate_checksum(const uint8_t* data, size_t len);
-    bool                   read_ack_response();
-    std::optional<int16_t> read_response();
-    void                   flush_receive();
+    float                               integer_to_float(int16_t i);
+    int16_t                             float_to_integer(float f);
+    void                                write_integer(int16_t val, uint8_t* data);
+    uint8_t                             calculate_checksum(const uint8_t* data, size_t len);
+    bool                                read_ack_response();
+    std::optional<int16_t>              read_response();
+    std::optional<std::vector<uint8_t>> read_long_response();
+    void                                flush_receive();
 
-    enum response_type_t { ONE_BYTE_RESPONSE, FIVE_BYTE_RESPONSE };
+    enum response_type_t { ONE_BYTE_RESPONSE, FIVE_BYTE_RESPONSE, FOURTYTWO_BYTE_RESPONSE };
 
-    std::optional<int16_t> run_command(target_t target, operation_t operation, uint16_t reg, uint16_t value, response_type_t response_type);
+    // This template nightmare will return different types depending on the response
+    // template parameter:
+    //
+    // ONE_BYTE_RESPONSE:        bool
+    // FIVE_BYTE_RESPONSE:       std::optional<int16_t>
+    // FOURTY_TWO_BYTE_RESPONSE: std::optional<std::vector<uint8_t>>
+    template <response_type_t response> decltype(auto) run_command(target_t target, operation_t operation, uint16_t reg, uint16_t value)
+    {
+        command_t                           cmd;
+        std::optional<int16_t>              result;
+        std::optional<std::vector<uint8_t>> long_result;
+
+        cmd.target    = target;
+        cmd.operation = operation;
+        write_integer(reg, cmd.reg);
+        write_integer(value, cmd.value);
+        cmd.checksum = calculate_checksum(cmd.reg, 6);
+
+        std::vector<uint8_t> data(sizeof(command_t));
+
+        memcpy(&data[0], &cmd, sizeof(command_t));
+
+        flush_receive();
+
+        if (write_serial(data)) {
+            if constexpr (response == ONE_BYTE_RESPONSE) {
+                if (read_ack_response()) {
+                    result = 1;
+                }
+            } else if constexpr (response == FIVE_BYTE_RESPONSE) {
+                result = read_response();
+            } else if constexpr (response == FOURTYTWO_BYTE_RESPONSE) {
+                long_result = read_long_response();
+            }
+        }
+
+        flush_receive();
+
+        if constexpr (response == ONE_BYTE_RESPONSE) {
+            if (result.has_value()) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if constexpr (response == FOURTYTWO_BYTE_RESPONSE) {
+            return long_result;
+        } else if constexpr (response == FIVE_BYTE_RESPONSE) {
+            return result;
+        }
+    }
 
     std::optional<float> read_sensor_register(sensor_register_t reg);
     bool                 write_button_register(front_panel_button_t reg, uint16_t val);
     std::optional<bool>  read_light_register(front_panel_light_t reg);
+
+    std::optional<std::vector<uint8_t>> read_display_line(uint8_t line);
 
 public:
     // Constructor only takes a pre-initialized UART component.
@@ -87,6 +139,8 @@ public:
     // Read and write the control registers that provide us with settings.
     std::optional<float> read_control_register(control_register_t reg);
     bool                 write_control_register(control_register_t reg, float val);
+
+    std::optional<std::vector<std::string>> read_display();
 };
 
 #endif
