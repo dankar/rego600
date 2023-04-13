@@ -55,6 +55,10 @@ The device should be reachable on your LAN, with the adress http://heatpump/ unl
 
 The display data can be read out from the heat pump controller. Currently only latin9 is supported, [modify the code](rego600_display.cpp) if you want other encodings. Home Assistant expects UTF-8.
 
+**Warning**! There seems to be a bug in the Rego600 controller that causes a lot of timeouts when reading values after entering the "Info" screen from the default view on the display. I've tried to handle this as best I can in the code, but if this screen is entered, a lot of values will fail to be read, including the screen. It can be fixed by exiting the menu (manually, or by blindly pressing the buttons in Home Assistant) or waiting for the screen to timeout and go back to the default screen. I'm still investigating this.
+
+Another curiosity is that there is no known way of instructing the controller to hold down a button, which is needed for the higher user levels in the menus.
+
 Here is an example of a display and controls setup in Home Assistant:
 
 ![image of display and controls](hardware/display.png)
