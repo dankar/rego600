@@ -51,6 +51,68 @@ After you've done this once, the same command can also update the firmware on th
 
 The device should be reachable on your LAN, with the adress http://heatpump/ unless you changed the device name. The API is also enabled so it should be possible to add it to e.g. home assistant with the same name.
 
+## Home assistant setup for controlling display
+
+The display data can be read out from the heat pump controller. Currently only latin9 is supported, [modify the code](rego600_display.cpp) if you want other encodings. Home Assistant expects UTF-8.
+
+Here is an example of a display and controls setup in Home Assistant:
+
+![image of display and controls](hardware/display.png)
+
+And here is the card setup in Home Assistant that produces the above picture:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: custom:html-template-card
+    ignore_line_breaks: true
+    content: >
+      <p style="font-size: 1.5em;white-space: break-spaces;font-family:'Lucida
+      Console', monospace"> {{ states('sensor.display_line_1') }}</p> <p
+      style="font-size: 1.5em;white-space: break-spaces;font-family:'Lucida
+      Console', monospace"> {{ states('sensor.display_line_2') }}</p> <p
+      style="font-size: 1.5em;white-space: break-spaces;font-family:'Lucida
+      Console', monospace"> {{ states('sensor.display_line_3') }}</p> <p
+      style="font-size: 1.5em;white-space: break-spaces;font-family:'Lucida
+      Console', monospace"> {{ states('sensor.display_line_4') }}</p>
+  - type: horizontal-stack
+    cards:
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: button.key_1
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: button.key_2
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: button.key_3
+  - type: horizontal-stack
+    cards:
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: button.wheel_left
+        icon: mdi:arrow-collapse-left
+      - show_name: false
+        show_icon: true
+        type: button
+        tap_action:
+          action: toggle
+        entity: button.wheel_right
+        icon: mdi:arrow-collapse-right
+```
+
 ## Further development
 
 There is, as far as I know, no official documentation of this protocol. I've implemented most of the registers that I could find in different sources online (one part that is currently missing from the code, but is fairly well documented, is reading out alarm logs, as well as reading the lines on the display).
